@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@types/jest": "^24.0.23",
-    "coveralls": "^3.0.8",
+    "coveralls": "^3.1.0",
     "date-fns": "^2.8.0",
     "eslint": "^6.6.0",
     "eslint-config-airbnb": "^18.0.1",
@@ -52,7 +52,7 @@
     "moleculer": "^0.13.11",
     "post-merge-install": "^0.3.0",
     "prettier": "^1.19.1",
-    "tsd": "^0.11.0"
+    "tsd": "^0.13.1"
   },
   "dependencies": {
     "@moleculer/vorpal": "^1.11.5",
@@ -60,7 +60,7 @@
     "fastest-validator": "^0.6.19",
     "glob": "^7.1.6",
     "inquirer": "^7.0.0",
-    "node-plop": "^0.23.0",
+    "node-plop": "^0.26.2",
     "plop": "^2.5.3",
     "resolve-command": "^0.20.29",
     "resolve-es": "^0.20.29",
