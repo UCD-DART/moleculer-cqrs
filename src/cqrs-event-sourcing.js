@@ -3,9 +3,8 @@ const {
   Errors: { MoleculerClientError, MoleculerServerError },
 } = require("moleculer");
 const commandHandler = require("resolve-command").default;
-const createEsStorage = require("resolve-storage-lite").default;
+const createEsStorage = require("resolve-eventstore-lite").default;
 // const createSnapshotAdapter = require("resolve-snapshot-lite").default;
-const createEventStore = require("resolve-es").default;
 const Validator = require("fastest-validator");
 
 const aggregateSchema = {
@@ -32,7 +31,7 @@ module.exports = function CQRSEventSourcing({
     // eslint-disable-next-line no-cond-assign
     if ((vRes = v.validate(aggregate, aggregateSchema)) !== true) {
       throw new Error(
-        `CQRSEventSourcing${vRes.map(err => err.message).join("\n")}`
+        `CQRSEventSourcing${vRes.map((err) => err.message).join("\n")}`
       );
     }
   }
@@ -121,8 +120,9 @@ module.exports = function CQRSEventSourcing({
           this.logger.info(
             `Materialized ${
               this.aggregateName
-            } with aggregateId ${aggregateId} ${hrend[0]}s ${hrend[1] /
-              1000000}ms`
+            } with aggregateId ${aggregateId} ${hrend[0]}s ${
+              hrend[1] / 1000000
+            }ms`
           );
           return result;
         },
@@ -195,7 +195,9 @@ module.exports = function CQRSEventSourcing({
 
           const eventTypes = [
             ...new Set(
-              events.filter(e => viewModels.includes(e.group)).map(e => e.name)
+              events
+                .filter((e) => viewModels.includes(e.group))
+                .map((e) => e.name)
             ),
           ];
 
@@ -213,7 +215,7 @@ module.exports = function CQRSEventSourcing({
 
           let eventCount = 0;
 
-          const eventHandler = async event => {
+          const eventHandler = async (event) => {
             this.logger.debug(event.type, event, viewModels);
             if (broadcast) {
               await this.broker.broadcast(event.type, event, viewModels);
@@ -229,8 +231,8 @@ module.exports = function CQRSEventSourcing({
           };
 
           await Promise.all(
-            viewModels.map(viewModel => {
-              return this.broker.call(`${viewModel}.dispose`).catch(e => {
+            viewModels.map((viewModel) => {
+              return this.broker.call(`${viewModel}.dispose`).catch((e) => {
                 if (e.code !== 404) {
                   this.logger.error(e);
                   throw new MoleculerServerError(e.message);
@@ -255,13 +257,13 @@ module.exports = function CQRSEventSourcing({
     },
     methods: {
       async delay(ms = 10) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
       },
       async loadHistory(eventFilter, withPayload) {
         let eventCount = 0;
         const state = [];
 
-        const eventHandler = async event => {
+        const eventHandler = async (event) => {
           state.push({
             version: event.aggregateVersion,
             timestamp: event.timestamp,
@@ -282,7 +284,7 @@ module.exports = function CQRSEventSourcing({
         const { projection } = this.aggregate;
         let state = projection.Init();
 
-        const eventHandler = event => {
+        const eventHandler = (event) => {
           state = projection[event.type](state, event);
           eventCount++;
         };
@@ -309,14 +311,7 @@ module.exports = function CQRSEventSourcing({
         this.aggregateName = this.name;
       }
 
-      const publishEvent = ctx => event => {
-        ctx.broker.broadcast(event.type, event);
-      };
-
-      this.eventStore = createEventStore({
-        storage: this.storage,
-        publishEvent: publishEvent(this),
-      });
+      this.eventStore = this.storage;
 
       if (this.settings.aggregate) {
         this.aggregate = this.settings.aggregate;
@@ -328,13 +323,13 @@ module.exports = function CQRSEventSourcing({
         });
         this.metadata.aggregate = true;
         this.metadata.commands = Object.keys(this.aggregate.commands).map(
-          name => name
+          (name) => name
         );
         this.metadata.projection = Object.keys(this.aggregate.projection).map(
-          name => name
+          (name) => name
         );
         this.metadata.events = Object.keys(this.aggregate.events).map(
-          name => this.aggregate.events[name]
+          (name) => this.aggregate.events[name]
         );
       }
     },

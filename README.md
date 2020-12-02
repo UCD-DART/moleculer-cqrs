@@ -75,13 +75,13 @@ npm run ci
 mkdir event-sourcing-storage
 mkdir data
 touch event-sourcing-storage/index.js
-npm install --save resolve-storage-lite
+npm install --save resolve-eventstore-lite
 ```
 
 ```javascript
 // event-sourcing-storage/index.js
 
-const createEsStorage = require("resolve-storage-lite").default;
+const createEsStorage = require("resolve-eventstore-lite").default;
 
 const eventStore = createEsStorage({
   databaseFile: "./data/event-store.sqlite",
@@ -157,7 +157,7 @@ CQRSEventSourcing service expose four actions but _command_, _read-model_ and _h
 
 ### EventSourcingStorage
 
-- `$ npm install --save resolve-storage-lite` - Adapter info: [SQLite](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-storage-lite)
+- `$ npm install --save resolve-eventstore-lite` - Adapter info: [SQLite](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-eventstore-lite)
 - `$ npm install --save resolve-storage-mongo` - Adapter info: [Mongo DB](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-storage-mongo)
 - `$ npm install --save resolve-storage-mysql` - Adapter info: [MySQL](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-storage-mysql)
 - `$ npm install --save resolve-storage-postgresql-serverless` - Adapter info: [Postgresql serverless](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-storage-postgresql-serverless)
@@ -297,7 +297,7 @@ describe("Testing  aggregate with cqrs fixture", () => {
           createdAt: Date.now(),
         })
       )
-      .inspectState(state =>
+      .inspectState((state) =>
         expect(Object.keys(state.comments).length).toEqual(2)
       );
   });
