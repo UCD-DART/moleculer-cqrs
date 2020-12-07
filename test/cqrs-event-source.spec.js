@@ -21,44 +21,86 @@ const sequenceDateNow = () => mockDate.next().value;
 jest.spyOn(global.Date, "now").mockImplementation(sequenceDateNow);
 
 async function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const EventSourceStorage = () => {
+const createEventstoreAdapter = () => {
   let events = [];
+  snapshots = new Map();
 
   return {
-    loadEvents: jest.fn().mockImplementation(async (filter, handler) => {
-      for (const event of events) {
-        if (filter.finishTime && filter.finishTime < event.timestamp) {
-          break;
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await handler(event);
+    connect: jest.fn(),
+    loadEvents: jest.fn().mockImplementation(async (filter) => {
+      let prevCursor;
+      if (filter.startTime != null || filter.finishTime != null) {
+      } else {
+        prevCursor = filter.cursor;
       }
+      let pc = prevCursor == null ? [] : [prevCursor];
+      return {
+        cursor: pc
+          .concat(events)
+          .map((e) => Buffer.from(JSON.stringify(e)).toString("base64"))
+          .join(","),
+        events:
+          prevCursor != null
+            ? `${events
+                .map((e) => Buffer.from(JSON.stringify(e)).toString("base64"))
+                .join(",")}`
+                .substr(prevCursor.length)
+                .split(",")
+                .filter((e) => e != null && e.length > 0)
+                .map((e) => JSON.parse(Buffer.from(e, "base64").toString()))
+            : events.filter((e) =>
+                filter.finishTime
+                  ? filter.finishTime && filter.finishTime >= e.timestamp
+                  : true
+              ),
+      };
     }),
-    saveEvent: jest.fn().mockImplementation(async event => {
+    getNextCursor: jest.fn().mockImplementation((prevCursor, events) => {
+      let pc = prevCursor == null ? [] : [prevCursor];
+      return pc
+        .concat(
+          events.map((e) => Buffer.from(JSON.stringify(e)).toString("base64"))
+        )
+        .join(",");
+    }),
+    getSecretsManager: jest.fn(),
+    saveSnapshot: jest.fn().mockImplementation((key, value) => {
+      return snapshots.set(key, value);
+    }),
+    loadSnapshot: jest.fn().mockImplementation((key) => {
+      return snapshots.get(key);
+    }),
+    saveEvent: jest.fn().mockImplementation(async (event) => {
       events.push(event);
       return event;
     }),
     dispose: () => {
       events = [];
+      snapshots = new Map();
     },
   };
 };
 
-const storage = EventSourceStorage();
+const eventstoreAdapter = createEventstoreAdapter();
+
+onCommandExecuted = jest.fn().mockImplementation(async (event) => {
+  events.push(event);
+  return event;
+});
 
 const TestAggregateService = {
   name: "test",
   mixins: [CQRSEventSourcing({ aggregate })],
-  storage,
+  eventstoreAdapter,
 };
 
 const TestInternalsService = {
   name: "internals",
   mixins: [CQRSEventSourcing({})],
-  storage,
+  eventstoreAdapter,
 };
 
 describe("CQRS event source", () => {
@@ -197,7 +239,7 @@ describe("CQRS event source", () => {
     numCommands = 0;
     mockEventEmitHandler.mockClear();
     mockEventBroadcastHandler.mockClear();
-    storage.dispose();
+    eventstoreAdapter.dispose();
   });
 
   test("should invalid aggregate configuration throw and error", async () => {
@@ -231,12 +273,16 @@ describe("CQRS event source", () => {
       mixins: [CQRSEventSourcing({ aggregate })],
     });
     const localService = broker.getLocalService("local-service");
-    expect(localService.storage).toBeDefined();
+    expect(localService.eventstoreAdapter).toBeDefined();
     const AsyncFunction = (async () => {}).constructor;
 
-    expect(localService.storage.init).toBeInstanceOf(AsyncFunction);
-    expect(localService.storage.loadEvents).toBeInstanceOf(AsyncFunction);
-    expect(localService.storage.saveEvent).toBeInstanceOf(AsyncFunction);
+    expect(localService.eventstoreAdapter.init).toBeInstanceOf(AsyncFunction);
+    expect(localService.eventstoreAdapter.loadEvents).toBeInstanceOf(
+      AsyncFunction
+    );
+    expect(localService.eventstoreAdapter.saveEvent).toBeInstanceOf(
+      AsyncFunction
+    );
   });
 
   describe("Aggregate service", () => {
@@ -256,7 +302,7 @@ describe("CQRS event source", () => {
           aggregateId: "12345",
           payload: {},
         })
-        .catch(err => {
+        .catch((err) => {
           expect(err).toBeInstanceOf(ValidationError);
           expect(err.message).toEqual("Parameters validation error!");
         });
@@ -268,7 +314,7 @@ describe("CQRS event source", () => {
           type: "createTest",
           payload: {},
         })
-        .catch(err => {
+        .catch((err) => {
           expect(err).toBeInstanceOf(ValidationError);
           expect(err.message).toEqual("Parameters validation error!");
         });
@@ -281,7 +327,7 @@ describe("CQRS event source", () => {
           type: "createTest",
           payload: {},
         })
-        .catch(err => {
+        .catch((err) => {
           expect(err).toBeInstanceOf(MoleculerClientError);
           expect(err.message).toContain("Aggregate validation error");
         });
@@ -296,7 +342,7 @@ describe("CQRS event source", () => {
           type: "createTest",
           payload: {},
         })
-        .catch(err => {
+        .catch((err) => {
           expect(err).toBeInstanceOf(MoleculerClientError);
           expect(err.message).toContain("Command action is disabled");
         });
@@ -307,7 +353,7 @@ describe("CQRS event source", () => {
         .call("internals.read-model", {
           aggregateId: "12345",
         })
-        .catch(err => {
+        .catch((err) => {
           expect(err).toBeInstanceOf(MoleculerClientError);
           expect(err.message).toContain(
             "Aggregate is not configurated, read-model action is disabled!"
@@ -320,7 +366,7 @@ describe("CQRS event source", () => {
         .call("internals.history", {
           aggregateId: "12345",
         })
-        .catch(err => {
+        .catch((err) => {
           expect(err).toBeInstanceOf(MoleculerClientError);
           expect(err.message).toContain(
             "Aggregate is not configurated, read-model action is disabled!"
@@ -419,7 +465,7 @@ describe("CQRS event source", () => {
         .call("internals.replay", {
           viewModels: ["view-model-error-disposable"],
         })
-        .catch(e => {
+        .catch((e) => {
           expect(e).toBeInstanceOf(MoleculerServerError);
         });
     });

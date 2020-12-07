@@ -11,7 +11,7 @@ module.exports = {
   commands,
   projection,
   events,
-  invariantHash: null,
-  serializeState: state => JSON.stringify(state),
-  deserializeState: serializedState => JSON.parse(serializedState),
+  invariantHash: "moleculer-cqrs",
+  serializeState: (state) => JSON.stringify(state),
+  deserializeState: (serializedState) => JSON.parse(serializedState),
 };

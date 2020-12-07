@@ -37,10 +37,10 @@ module.exports = function CQRSEventSourcing({
   }
 
   return {
-    storage: undefined,
     commandHandler: undefined,
     aggregateName: undefined,
-    eventStore: undefined,
+    eventstoreAdapter: undefined,
+    onCommandExecuted: undefined,
     aggregate: undefined,
     metadata: {
       aggregate: false,
@@ -241,7 +241,14 @@ module.exports = function CQRSEventSourcing({
             })
           );
 
-          await this.eventStore.loadEvents(eventFilter, eventHandler);
+          await (async () => {
+            let { events } = await this.eventstoreAdapter.loadEvents(
+              eventFilter
+            );
+            for (const event of events) {
+              await eventHandler(event);
+            }
+          })();
 
           const hrend = process.hrtime(hrstart);
           this.logger.info(
@@ -274,7 +281,12 @@ module.exports = function CQRSEventSourcing({
           eventCount++;
         };
 
-        await this.eventStore.loadEvents(eventFilter, eventHandler);
+        await (async () => {
+          let { events } = await this.eventstoreAdapter.loadEvents(eventFilter);
+          for (const event of events) {
+            await eventHandler(event);
+          }
+        })();
 
         this.logger.info("Loaded %d", eventCount);
         return state;
@@ -289,7 +301,12 @@ module.exports = function CQRSEventSourcing({
           eventCount++;
         };
 
-        await this.eventStore.loadEvents(eventFilter, eventHandler);
+        await (async () => {
+          let { events } = await this.eventstoreAdapter.loadEvents(eventFilter);
+          for (const event of events) {
+            await eventHandler(event);
+          }
+        })();
 
         this.logger.info("Loaded %d events", eventCount);
 
@@ -298,11 +315,13 @@ module.exports = function CQRSEventSourcing({
     },
 
     created() {
-      if (!this.schema.storage) {
-        this.logger.info("No storage defined, use default memory storage");
-        this.storage = createEsStorage({ databaseFile: ":memory:" });
+      if (!this.schema.eventstoreAdapter) {
+        this.logger.info(
+          "No eventstoreAdapter defined, use default memory eventstoreAdapter"
+        );
+        this.eventstoreAdapter = createEsStorage({ databaseFile: ":memory:" });
       } else {
-        this.storage = this.schema.storage;
+        this.eventstoreAdapter = this.schema.eventstoreAdapter;
       }
 
       if (this.schema.aggregateName) {
@@ -311,13 +330,17 @@ module.exports = function CQRSEventSourcing({
         this.aggregateName = this.name;
       }
 
-      this.eventStore = this.storage;
+      const publishEvent = (service) => async (event) => {
+        await service.eventstoreAdapter.saveEvent(event);
+        await service.broker.broadcast(event.type, event);
+      };
 
       if (this.settings.aggregate) {
         this.aggregate = this.settings.aggregate;
         delete this.settings.aggregate;
         this.commandHandler = commandHandler({
-          eventStore: this.eventStore,
+          eventstoreAdapter: this.eventstoreAdapter,
+          onCommandExecuted: publishEvent(this),
           aggregates: [this.aggregate],
           // snapshotAdapter
         });
