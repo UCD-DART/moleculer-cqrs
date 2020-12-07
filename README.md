@@ -81,13 +81,13 @@ npm install --save resolve-eventstore-lite
 ```javascript
 // event-sourcing-storage/index.js
 
-const createEsStorage = require("resolve-eventstore-lite").default;
+const createEventstoreAdapter = require("resolve-eventstore-lite").default;
 
-const eventStore = createEsStorage({
+const eventstoreAdapter = createEventstoreAdapter({
   databaseFile: "./data/event-store.sqlite",
 });
 
-module.exports = eventStore;
+module.exports = eventstoreAdapter;
 ```
 
 ### Staring up and playing with moleculer services
@@ -157,20 +157,20 @@ CQRSEventSourcing service expose four actions but _command_, _read-model_ and _h
 
 ### EventSourcingStorage
 
-- `$ npm install --save resolve-eventstore-lite` - Adapter info: [SQLite](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-eventstore-lite)
-- `$ npm install --save resolve-storage-mongo` - Adapter info: [Mongo DB](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-storage-mongo)
-- `$ npm install --save resolve-storage-mysql` - Adapter info: [MySQL](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-storage-mysql)
-- `$ npm install --save resolve-storage-postgresql-serverless` - Adapter info: [Postgresql serverless](https://github.com/reimagined/resolve/tree/master/packages/adapters/storage-adapters/resolve-storage-postgresql-serverless)
+- `$ npm install --save resolve-eventstore-lite` - Adapter info: [SQLite](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-lite)
+- `$ npm install --save resolve-evenstore-mysql` - Adapter info: [MySQL](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-mysql)
+- `$ npm install --save resolve-evenstore-postgresql-serverless` - Adapter info: [PostgreSQL serverless](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-serverless)
+- `$ npm install --save resolve-eventstore-postgresql` - Adapter info: [PostgreSQL](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql)
 
 ```javascript
 const CQRSEventSourcing = require("moleculer-cqrs");
-const EventSourcingStorage = require("../event-sourcing-storage");
+const EventstoreAdapter = require("../event-eventstore-lite");
 const aggregate = require("../aggregates/todo");
 
 module.exports = {
   name: "todo",
   mixins: [CQRSEventSourcing({ aggregate })],
-  storage: EventSourcingStorage,
+  eventstoreAdapter: EventstoreAdapter,
   settings: {},
   dependencies: [],
   actions: {},

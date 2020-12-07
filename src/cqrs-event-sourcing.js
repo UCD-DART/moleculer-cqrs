@@ -2,7 +2,7 @@
 const {
   Errors: { MoleculerClientError, MoleculerServerError },
 } = require("moleculer");
-const commandHandler = require("resolve-command").default;
+const createCommandHandler = require("resolve-command").default;
 const createEsStorage = require("resolve-eventstore-lite").default;
 // const createSnapshotAdapter = require("resolve-snapshot-lite").default;
 const Validator = require("fastest-validator");
@@ -338,7 +338,7 @@ module.exports = function CQRSEventSourcing({
       if (this.settings.aggregate) {
         this.aggregate = this.settings.aggregate;
         delete this.settings.aggregate;
-        this.commandHandler = commandHandler({
+        this.commandHandler = createCommandHandler({
           eventstoreAdapter: this.eventstoreAdapter,
           onCommandExecuted: publishEvent(this),
           aggregates: [this.aggregate],
