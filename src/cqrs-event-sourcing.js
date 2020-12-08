@@ -91,27 +91,35 @@ module.exports = function CQRSEventSourcing({
           };
         },
       },
+
       "read-model": {
         params: {
           aggregateId: "any",
-          finishTime: { type: "number", optional: true },
+          finishTime: { type: "number", integer: true, optional: true },
+          limit: {
+            type: "number",
+            integer: true,
+            optional: true,
+            default: Number.MAX_SAFE_INTEGER,
+          },
         },
         async handler(ctx) {
           if (!this.aggregate) {
             return "Aggregate is not configurated, read-model action is disabled!";
           }
           const hrstart = process.hrtime();
-          const { aggregateId, finishTime } = ctx.params;
+          const { aggregateId, finishTime, limit } = ctx.params;
 
           this.logger.info(aggregateId, ctx.params);
 
           this.logger.info(
-            `Load event history for aggregate '${this.aggregateName}' with aggregateId '${aggregateId}', finishTime '${finishTime}'`
+            `Load event history for aggregate '${this.aggregateName}' with aggregateId '${aggregateId}', finishTime ${finishTime}, limit ${limit}`
           );
 
           const eventFilter = this.cleanFilter({
             aggregateIds: [aggregateId],
             finishTime,
+            limit,
           });
 
           const result = await this.materializeReadModelState(eventFilter);
@@ -127,9 +135,19 @@ module.exports = function CQRSEventSourcing({
           return result;
         },
       },
+
       history: {
         params: {
           aggregateId: "any",
+          payload: { type: "any", optional: true },
+          startTime: { type: "number", integer: true, optional: true },
+          finishTime: { type: "number", integer: true, optional: true },
+          limit: {
+            type: "number",
+            integer: true,
+            optional: true,
+            default: Number.MAX_SAFE_INTEGER,
+          },
         },
         async handler(ctx) {
           if (!this.aggregate) {
@@ -141,6 +159,7 @@ module.exports = function CQRSEventSourcing({
             payload = false,
             startTime,
             finishTime,
+            limit,
           } = ctx.params;
 
           this.logger.info(aggregateId, ctx.params);
@@ -150,7 +169,7 @@ module.exports = function CQRSEventSourcing({
           );
 
           this.logger.info(
-            `Options: payload=${payload}, startTime=${startTime}, finishTime=${finishTime}`
+            `Options: payload=${payload}, startTime=${startTime}, finishTime'=${finishTime}, limit=${limit}`
           );
 
           const eventFilter = this.cleanFilter({
@@ -158,6 +177,7 @@ module.exports = function CQRSEventSourcing({
             aggregateIds: [aggregateId], // Or null to load ALL aggregate ids
             startTime, // Or null to load events from beginning of time
             finishTime, // Or null to load events to current time
+            limit,
           });
 
           const result = await this.loadHistory(eventFilter, payload);
@@ -171,6 +191,7 @@ module.exports = function CQRSEventSourcing({
           return result;
         },
       },
+
       replay: {
         params: {
           viewModels: { type: "array" },
