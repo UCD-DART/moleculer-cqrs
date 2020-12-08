@@ -106,13 +106,17 @@ module.exports = function CQRSEventSourcing({
           this.logger.info(aggregateId, ctx.params);
 
           this.logger.info(
-            `Load event history for aggregate '${this.aggregateName}' with aggregateId '${aggregateId}', finishTime {finishTime}`
+            `Load event history for aggregate '${this.aggregateName}' with aggregateId '${aggregateId}', finishTime '${finishTime}'`
           );
 
           const eventFilter = {
             aggregateIds: [aggregateId],
             finishTime,
           };
+
+          Object.keys(eventFilter).forEach((key) =>
+            eventFilter[key] === undefined ? delete eventFilter[key] : {}
+          );
 
           const result = await this.materializeReadModelState(eventFilter);
 
