@@ -109,14 +109,10 @@ module.exports = function CQRSEventSourcing({
             `Load event history for aggregate '${this.aggregateName}' with aggregateId '${aggregateId}', finishTime '${finishTime}'`
           );
 
-          const eventFilter = {
+          const eventFilter = this.cleanFilter({
             aggregateIds: [aggregateId],
             finishTime,
-          };
-
-          Object.keys(eventFilter).forEach((key) =>
-            eventFilter[key] === undefined ? delete eventFilter[key] : {}
-          );
+          });
 
           const result = await this.materializeReadModelState(eventFilter);
 
@@ -157,12 +153,12 @@ module.exports = function CQRSEventSourcing({
             `Options: payload=${payload}, startTime=${startTime}, finishTime=${finishTime}`
           );
 
-          const eventFilter = {
+          const eventFilter = this.cleanFilter({
             // eventTypes: ["news/created"] // Or null to load ALL event types
             aggregateIds: [aggregateId], // Or null to load ALL aggregate ids
             startTime, // Or null to load events from beginning of time
             finishTime, // Or null to load events to current time
-          };
+          });
 
           const result = await this.loadHistory(eventFilter, payload);
 
@@ -211,11 +207,11 @@ module.exports = function CQRSEventSourcing({
             `Options: startTime=${startTime}, finishTime=${finishTime}, broadcast events=${broadcast}`
           );
 
-          const eventFilter = {
+          const eventFilter = this.cleanFilter({
             eventTypes, // Or null to load ALL event types
             startTime, // Or null to load events from beginning of time
             finishTime, // Or null to load events to current time
-          };
+          });
 
           let eventCount = 0;
 
@@ -295,6 +291,7 @@ module.exports = function CQRSEventSourcing({
         this.logger.info("Loaded %d", eventCount);
         return state;
       },
+
       async materializeReadModelState(eventFilter) {
         let eventCount = 0;
         const { projection } = this.aggregate;
@@ -315,6 +312,14 @@ module.exports = function CQRSEventSourcing({
         this.logger.info("Loaded %d events", eventCount);
 
         return state;
+      },
+
+      cleanFilter(filter) {
+        let ret = Object.assign({}, filter);
+        Object.keys(ret).forEach((key) =>
+          ret[key] === undefined ? delete ret[key] : {}
+        );
+        return ret;
       },
     },
 
