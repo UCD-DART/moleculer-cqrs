@@ -196,6 +196,14 @@ module.exports = function CQRSEventSourcing({
         params: {
           viewModels: { type: "array" },
           broadcast: { type: "boolean", optional: true },
+          startTime: { type: "number", integer: true, optional: true },
+          finishTime: { type: "number", integer: true, optional: true },
+          limit: {
+            type: "number",
+            integer: true,
+            optional: true,
+            default: Number.MAX_SAFE_INTEGER,
+          },
         },
         async handler(ctx) {
           const hrstart = process.hrtime();
@@ -212,6 +220,7 @@ module.exports = function CQRSEventSourcing({
             startTime,
             finishTime,
             broadcast = false,
+            limit,
           } = ctx.params;
 
           const eventTypes = [
@@ -231,7 +240,8 @@ module.exports = function CQRSEventSourcing({
           const eventFilter = this.cleanFilter({
             eventTypes, // Or null to load ALL event types
             startTime, // Or null to load events from beginning of time
-            finishTime, // Or null to load events to current time
+            finishTime, // Or null to load events to current time,
+            limit,
           });
 
           let eventCount = 0;
@@ -372,7 +382,6 @@ module.exports = function CQRSEventSourcing({
           eventstoreAdapter: this.eventstoreAdapter,
           onCommandExecuted: publishEvent(this),
           aggregates: [this.aggregate],
-          // snapshotAdapter
         });
         this.metadata.aggregate = true;
         this.metadata.commands = Object.keys(this.aggregate.commands).map(
