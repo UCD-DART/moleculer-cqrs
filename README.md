@@ -158,8 +158,8 @@ CQRSEventSourcing service expose four actions but _command_, _read-model_ and _h
 ### EventSourcingStorage
 
 - `$ npm install --save resolve-eventstore-lite` - Adapter info: [SQLite](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-lite)
-- `$ npm install --save resolve-evenstore-mysql` - Adapter info: [MySQL](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-mysql)
-- `$ npm install --save resolve-evenstore-postgresql-serverless` - Adapter info: [PostgreSQL serverless](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-serverless)
+- `$ npm install --save resolve-eventstore-mysql` - Adapter info: [MySQL](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-mysql)
+- `$ npm install --save resolve-eventstore-postgresql-serverless` - Adapter info: [PostgreSQL serverless](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql-serverless)
 - `$ npm install --save resolve-eventstore-postgresql` - Adapter info: [PostgreSQL](https://github.com/reimagined/resolve/tree/master/packages/adapters/eventstore-adapters/resolve-eventstore-postgresql)
 
 ```javascript
