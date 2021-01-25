@@ -37,19 +37,19 @@
     "moleculer-db": "^0.8.2"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.18",
+    "@types/jest": "^26.0.20",
     "coveralls": "^3.1.0",
     "date-fns": "^2.16.1",
-    "eslint": "^7.15.0",
+    "eslint": "^7.18.0",
     "eslint-config-airbnb": "^18.2.1",
-    "eslint-config-prettier": "^7.0.0",
+    "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-prettier": "^3.2.0",
-    "husky": "^4.3.5",
+    "eslint-plugin-prettier": "^3.3.1",
+    "husky": "^4.3.8",
     "jest": "^26.6.3",
     "jest-cli": "^26.6.3",
     "lint-staged": "^10.5.3",
-    "moleculer": "^0.14.11",
+    "moleculer": "^0.14.12",
     "post-merge-install": "^0.4.0",
     "prettier": "^2.2.1",
     "tsd": "^0.14.0"
@@ -62,8 +62,8 @@
     "inquirer": "^7.0.0",
     "node-plop": "^0.26.2",
     "plop": "^2.5.3",
-    "resolve-command": "^0.26.2",
-    "resolve-eventstore-lite": "^0.26.2",
+    "resolve-command": "^0.26.4",
+    "resolve-eventstore-lite": "^0.26.4",
     "uuid": "^8.3.2"
   },
   "engines": {
