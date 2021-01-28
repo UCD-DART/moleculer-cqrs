@@ -63,7 +63,6 @@
     "node-plop": "^0.26.2",
     "plop": "^2.5.3",
     "resolve-command": "^0.26.4",
-    "resolve-eventstore-lite": "^0.26.4",
     "uuid": "^8.3.2"
   },
   "engines": {

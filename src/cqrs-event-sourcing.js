@@ -1,9 +1,10 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-await-in-loop */
 /* eslint-disable global-require */
 const {
   Errors: { MoleculerClientError, MoleculerServerError },
 } = require("moleculer");
 const createCommandHandler = require("resolve-command").default;
-const createEsStorage = require("resolve-eventstore-lite").default;
 // const createSnapshotAdapter = require("resolve-snapshot-lite").default;
 const Validator = require("fastest-validator");
 
@@ -262,18 +263,19 @@ module.exports = function CQRSEventSourcing({
           };
 
           await Promise.all(
-            viewModels.map((viewModel) => {
-              return this.broker.call(`${viewModel}.dispose`).catch((e) => {
+            viewModels.map((viewModel) =>
+              this.broker.call(`${viewModel}.dispose`).catch((e) => {
                 if (e.code !== 404) {
                   this.logger.error(e);
                   throw new MoleculerServerError(e.message);
                 }
-              });
-            })
+              })
+            )
           );
 
           await (async () => {
-            let { events } = await this.eventstoreAdapter.loadEvents(
+            // eslint-disable-next-line no-shadow
+            const { events } = await this.eventstoreAdapter.loadEvents(
               eventFilter
             );
             for (const event of events) {
@@ -313,7 +315,9 @@ module.exports = function CQRSEventSourcing({
         };
 
         await (async () => {
-          let { events } = await this.eventstoreAdapter.loadEvents(eventFilter);
+          const { events } = await this.eventstoreAdapter.loadEvents(
+            eventFilter
+          );
           for (const event of events) {
             await eventHandler(event);
           }
@@ -334,7 +338,9 @@ module.exports = function CQRSEventSourcing({
         };
 
         await (async () => {
-          let { events } = await this.eventstoreAdapter.loadEvents(eventFilter);
+          const { events } = await this.eventstoreAdapter.loadEvents(
+            eventFilter
+          );
           for (const event of events) {
             await eventHandler(event);
           }
@@ -346,7 +352,7 @@ module.exports = function CQRSEventSourcing({
       },
 
       cleanFilter(filter) {
-        let ret = Object.assign({}, filter);
+        const ret = { ...filter };
         Object.keys(ret).forEach((key) =>
           ret[key] === undefined ? delete ret[key] : {}
         );
@@ -356,10 +362,7 @@ module.exports = function CQRSEventSourcing({
 
     created() {
       if (!this.schema.eventstoreAdapter) {
-        this.logger.info(
-          "No eventstoreAdapter defined, use default memory eventstoreAdapter"
-        );
-        this.eventstoreAdapter = createEsStorage({ databaseFile: ":memory:" });
+        throw new Error(`CQRSEventSourcing: No eventstoreAdapter defined`);
       } else {
         this.eventstoreAdapter = this.schema.eventstoreAdapter;
       }
